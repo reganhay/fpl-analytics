@@ -22,8 +22,8 @@ dbt stg_ models star schema, tests   Parquet files     report, Regan builds
 
 | Milestone | Owner | Done when | State |
 | --- | --- | --- | --- |
-| 1. Extraction client | Claude Code | `fpl extract daily` saves today's raw files | Code and tests done; awaiting first live run |
-| 2. Schedule and backfill | Claude Code | Daily runs pass 2 days running; backfill full | Workflow built; awaiting go-live |
+| 1. Extraction client | Claude Code | `fpl extract daily` saves today's raw files | Done 2026-10-28 |
+| 2. Schedule and backfill | Claude Code | Daily runs pass 2 days running; backfill full | Backfill full (2026-10-28); awaiting 2 scheduled runs |
 | 3. Load and staging | Claude Code | `dbt build` passes with staging tests green | Not started |
 | 4. Marts and snapshot | Regan | Star schema and reconciliation tests pass | Not started |
 | 5. Power BI report | Regan | All six pages and measures work | Not started |
