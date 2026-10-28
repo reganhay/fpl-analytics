@@ -1,5 +1,5 @@
-# Daily FPL snapshot. Runs the extract, then commits new raw files and the run log back to
-# the repository. Load, dbt build and export are added here as Milestone 3 lands.
+# Daily FPL snapshot. Extracts, loads into DuckDB, builds and tests the dbt models, then
+# commits new raw files and the run log back to the repository. Export joins in Milestone 4.
 #
 # Failure emails: GitHub emails the person who last edited this schedule whenever a scheduled
 # run fails (Settings > Notifications > Actions on github.com controls this).
@@ -48,6 +48,19 @@ jobs:
 
       - name: Extract
         run: uv run fpl ${{ inputs.command || 'extract daily' }}
+
+      # The warehouse is rebuilt from the raw files on every run and never committed.
+      - name: Load
+        run: uv run fpl load
+
+      # Builds the staging models and runs every data test. A failing test fails the run.
+      - name: Transform and test
+        working-directory: dbt
+        run: uv run dbt build
+
+      - name: Check freshness
+        working-directory: dbt
+        run: uv run dbt source freshness
 
       # Runs even when the extract failed, so the failure line in run_log.csv is kept.
       - name: Commit new data

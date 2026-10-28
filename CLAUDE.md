@@ -51,4 +51,9 @@ uv run pytest            # tests use tests/sample_responses, never the live API
 uv run ruff check . ; uv run ruff format .
 uv run fpl extract daily
 uv run fpl backfill
+uv run fpl load          # raw files -> DuckDB raw.* tables (one row per file, JSON payload)
+cd dbt; uv run dbt build # run dbt from inside dbt/ so it finds profiles.yml
 ```
+
+Staging models unpack the raw JSON with DuckDB's `json_extract(payload, '$.x[*]')` + `unnest`
+and `->>` field access. Custom generic tests live in `dbt/tests/generic/` (no dbt packages).

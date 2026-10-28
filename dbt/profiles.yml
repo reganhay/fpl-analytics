@@ -1,0 +1,9 @@
+# dbt looks for profiles.yml in the folder it runs from, so run dbt from inside dbt/.
+# The warehouse path is relative to that folder; FPL_WAREHOUSE overrides it.
+fpl:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('FPL_WAREHOUSE', '../data/fpl.duckdb') }}"
+      threads: 4

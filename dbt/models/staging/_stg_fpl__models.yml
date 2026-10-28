@@ -1,0 +1,200 @@
+version: 2
+
+models:
+  - name: stg_fpl__players
+    description: One row per player per daily snapshot. Prices in pounds (millions).
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [player_id, snapshot_date]
+    columns:
+      - name: player_id
+        description: FPL element ID. Stable within a season, reused across seasons.
+        data_tests: [not_null]
+      - name: position
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [GKP, DEF, MID, FWD]
+      - name: team_id
+        data_tests: [not_null]
+      - name: price_gbp
+        description: Current price in £m (now_cost / 10).
+        data_tests:
+          - not_null
+          - value_between:
+              arguments:
+                min_value: 3.5
+                max_value: 16.0
+      - name: selected_pct
+        description: Percentage of all FPL managers who own the player.
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: status
+        description: "a = available, d = doubtful, i = injured, s = suspended, u = unavailable, n = not in squad (loan)."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [a, d, i, s, u, n]
+
+  - name: stg_fpl__teams
+    description: One row per club per daily snapshot.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [team_id, snapshot_date]
+      - rows_per_snapshot:
+          arguments:
+            expected: 20
+    columns:
+      - name: team_id
+        data_tests: [not_null]
+
+  - name: stg_fpl__gameweeks
+    description: One row per gameweek per daily snapshot.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [gameweek_id, snapshot_date]
+      - rows_per_snapshot:
+          arguments:
+            expected: 38
+    columns:
+      - name: gameweek_id
+        data_tests: [not_null]
+      - name: deadline_time
+        data_tests: [not_null]
+
+  - name: stg_fpl__fixtures
+    description: One row per fixture per daily snapshot. Keep the latest snapshot for current state.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [fixture_id, snapshot_date]
+      - rows_per_snapshot:
+          arguments:
+            expected: 380
+    columns:
+      - name: fixture_id
+        data_tests: [not_null]
+      - name: gameweek_id
+        description: Null while a postponed fixture is unscheduled.
+      - name: home_difficulty
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 1
+                max_value: 5
+      - name: away_difficulty
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 1
+                max_value: 5
+
+  - name: stg_fpl__event_status
+    description: One row per match day of the current gameweek per daily snapshot.
+    columns:
+      - name: gameweek_id
+        data_tests: [not_null]
+
+  - name: stg_fpl__player_gameweek_live
+    description: >
+      One row per player per final gameweek. Stats are summed across both matches in a
+      double gameweek; use stg_fpl__player_match_history for per-fixture grain.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [gameweek_id, player_id]
+    columns:
+      - name: minutes
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 0
+                max_value: 200
+
+  - name: stg_fpl__player_match_history
+    description: One row per player per fixture this season, with price and ownership at the time.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [player_id, fixture_id]
+    columns:
+      - name: player_id
+        data_tests: [not_null]
+      - name: fixture_id
+        data_tests: [not_null]
+      - name: minutes
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: price_gbp
+        description: Price in £m at the time of the match.
+        data_tests:
+          - not_null
+          - value_between:
+              arguments:
+                min_value: 3.5
+                max_value: 16.0
+
+  - name: stg_fpl__my_gameweeks
+    description: One row per gameweek of my team, from the latest history file.
+    columns:
+      - name: gameweek_id
+        data_tests: [unique, not_null]
+      - name: points
+        description: Gameweek points after transfer costs are deducted.
+
+  - name: stg_fpl__my_chips
+    description: One row per chip played.
+    columns:
+      - name: chip_name
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [wildcard, freehit, bboost, 3xc, manager]
+
+  - name: stg_fpl__my_picks
+    description: One row per player in my squad per gameweek, before automatic substitutions.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [gameweek_id, player_id]
+      - unique_combination:
+          arguments:
+            columns: [gameweek_id, squad_position]
+      - rows_per_gameweek:
+          arguments:
+            expected: 15
+    columns:
+      - name: squad_position
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 1
+                max_value: 15
+      - name: multiplier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2, 3]
+                quote: false
+
+  - name: stg_fpl__my_automatic_subs
+    description: One row per automatic substitution in my team.
+
+  - name: stg_fpl__my_transfers
+    description: One row per transfer I have made.
+    columns:
+      - name: player_in_id
+        data_tests: [not_null]
+      - name: player_out_id
+        data_tests: [not_null]

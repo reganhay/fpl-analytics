@@ -1,0 +1,43 @@
+version: 2
+
+sources:
+  - name: fpl_raw
+    description: >
+      Raw FPL API responses loaded by `fpl load`. One row per saved file, with the untouched
+      JSON in `payload`. Rebuilt from data/raw on every load.
+    schema: raw
+    tables:
+      - name: bootstrap_static
+        description: Daily snapshot of every player, team and gameweek.
+        config:
+          loaded_at_field: "snapshot_date::timestamp"
+          freshness:
+            warn_after: {count: 2, period: day}
+        data_tests:
+          - json_key_drift:
+              arguments:
+                path: "$.elements[*]"
+          - json_key_drift:
+              arguments:
+                path: "$.teams[*]"
+          - json_key_drift:
+              arguments:
+                path: "$.events[*]"
+      - name: fixtures
+        description: Daily snapshot of all 380 fixtures.
+        data_tests:
+          - json_key_drift:
+              arguments:
+                path: "$[*]"
+      - name: event_status
+        description: Daily snapshot of whether the current gameweek's points are final.
+      - name: event_live
+        description: Every player's stats for one final gameweek. entity_key is the gameweek (gw07).
+      - name: element_summary
+        description: One player's per-match history. entity_key is the player ID.
+      - name: entry_history
+        description: My team's season history and chips, saved when a gameweek becomes final.
+      - name: entry_transfers
+        description: Every transfer I have made, saved when a gameweek becomes final.
+      - name: entry_picks
+        description: My 15 picks for one final gameweek. entity_key is the gameweek (gw07).

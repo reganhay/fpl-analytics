@@ -24,7 +24,7 @@ dbt stg_ models star schema, tests   Parquet files     report, Regan builds
 | --- | --- | --- | --- |
 | 1. Extraction client | Claude Code | `fpl extract daily` saves today's raw files | Done 2026-10-28 |
 | 2. Schedule and backfill | Claude Code | Daily runs pass 2 days running; backfill full | Backfill full (2026-10-28); awaiting 2 scheduled runs |
-| 3. Load and staging | Claude Code | `dbt build` passes with staging tests green | Not started |
+| 3. Load and staging | Claude Code | `dbt build` passes with staging tests green | Passing locally; awaiting first scheduled run |
 | 4. Marts and snapshot | Regan | Star schema and reconciliation tests pass | Not started |
 | 5. Power BI report | Regan | All six pages and measures work | Not started |
 | 6. Analysis and write-up | Regan | Findings, README and post are published | Not started |
@@ -52,11 +52,29 @@ Set your FPL manager ID in [config.toml](config.toml).
 ```powershell
 uv run fpl extract daily   # today's snapshot, plus any newly final gameweek data
 uv run fpl backfill        # one-off: every player's match history (~670 calls, ~6 minutes)
+uv run fpl load            # rebuild the DuckDB raw tables from data/raw
+
+cd dbt
+uv run dbt build           # build the staging (and later marts) models and run every data test
+uv run dbt source freshness  # warn if the latest snapshot is more than 2 days old
+uv run dbt docs generate; uv run dbt docs serve   # browse the model documentation and lineage
 ```
 
-Both commands are safe to re-run: a second run on the same day overwrites rather than duplicates,
-and an interrupted backfill carries on from where it stopped. Each run appends a line to
-`data/run_log.csv`.
+Every command is safe to re-run: a second run on the same day overwrites rather than
+duplicates, an interrupted backfill carries on from where it stopped, and the warehouse
+(`data/fpl.duckdb`, not committed) is rebuilt from the raw files. Each `fpl` run appends a line
+to `data/run_log.csv`.
+
+## Data layers
+
+| Layer | Where | What |
+| --- | --- | --- |
+| Raw | `raw.*` tables in DuckDB | One row per saved file: `snapshot_date`, `entity_key`, `source_file`, untouched JSON `payload` |
+| Staging | `staging.stg_fpl__*` views | One cleaned view per source entity: named columns, correct types, prices in £m |
+| Marts | `marts.dim_*`, `marts.fct_*` tables | The star schema Power BI reads |
+
+Staging models and their tests are documented in
+[dbt/models/staging/_stg_fpl__models.yml](dbt/models/staging/_stg_fpl__models.yml).
 
 ## Daily schedule
 

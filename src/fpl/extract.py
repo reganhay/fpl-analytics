@@ -39,6 +39,10 @@ class ExtractResult:
     files_written: list[Path] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
 
+    @property
+    def rows_written(self) -> int:
+        return len(self.files_written)
+
 
 def today_utc() -> date:
     # UTC rather than UK time: Windows Python ships without a time-zone database, and a

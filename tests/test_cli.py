@@ -7,12 +7,14 @@ from conftest import FakeClient, default_routes
 from fpl import cli
 
 
-def test_run_stage_logs_success_and_failure(settings, monkeypatch) -> None:
-    monkeypatch.setattr(cli, "make_client", lambda s: FakeClient(default_routes()))
-    assert cli.run_stage(settings, "extract_daily", cli.extract_daily) == 0
-
-    monkeypatch.setattr(cli, "make_client", lambda s: FakeClient({}))
-    assert cli.run_stage(settings, "extract_daily", cli.extract_daily) == 1
+def test_run_stage_logs_success_and_failure(settings) -> None:
+    ok = cli.run_stage(
+        settings, "extract_daily", lambda: cli.extract_daily(FakeClient(default_routes()), settings)
+    )
+    failed = cli.run_stage(
+        settings, "extract_daily", lambda: cli.extract_daily(FakeClient({}), settings)
+    )
+    assert (ok, failed) == (0, 1)
 
     with settings.run_log.open(encoding="utf-8") as f:
         rows = list(csv.DictReader(f))

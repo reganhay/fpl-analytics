@@ -1,0 +1,21 @@
+name: fpl
+version: "1.0.0"
+profile: fpl
+
+model-paths: ["models"]
+snapshot-paths: ["snapshots"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: target
+clean-targets: [target, dbt_packages]
+
+models:
+  fpl:
+    # Staging: one cleaned view per source entity. Views are cheap and always current.
+    staging:
+      +schema: staging
+      +materialized: view
+    # Marts: the star schema Power BI reads. Tables, so the export is a straight copy.
+    marts:
+      +schema: marts
+      +materialized: table
