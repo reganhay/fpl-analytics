@@ -1,0 +1,18 @@
+# Settings for the fpl pipeline. Paths are relative to this file.
+
+[manager]
+# From the URL of your Points page: fantasy.premierleague.com/entry/<id>/event/<gw>
+id = 2244018
+
+[api]
+base_url = "https://fantasy.premierleague.com/api/"
+user_agent = "fpl-analytics/0.1 (personal data-analytics learning project)"
+request_delay_seconds = 0.5
+timeout_seconds = 30
+max_attempts = 5
+
+[paths]
+raw_dir = "data/raw"
+marts_dir = "data/marts"
+warehouse = "data/fpl.duckdb"
+run_log = "data/run_log.csv"

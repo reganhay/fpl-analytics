@@ -1,0 +1,65 @@
+# Daily FPL snapshot. Runs the extract, then commits new raw files and the run log back to
+# the repository. Load, dbt build and export are added here as Milestone 3 lands.
+#
+# Failure emails: GitHub emails the person who last edited this schedule whenever a scheduled
+# run fails (Settings > Notifications > Actions on github.com controls this).
+
+name: daily
+
+on:
+  schedule:
+    # Cron is in UTC: 06:00 GMT in winter, 07:00 BST in summer. Both are after the
+    # overnight price changes (around 01:30 UK time).
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "What to run"
+        type: choice
+        options:
+          - extract daily
+          - backfill
+        default: extract daily
+
+permissions:
+  contents: write
+
+# Never let two runs write raw files at the same time.
+concurrency:
+  group: fpl-data
+  cancel-in-progress: false
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: uv sync
+
+      - name: Run tests
+        run: uv run pytest -q
+
+      - name: Extract
+        run: uv run fpl ${{ inputs.command || 'extract daily' }}
+
+      # Runs even when the extract failed, so the failure line in run_log.csv is kept.
+      - name: Commit new data
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/
+          if git diff --cached --quiet; then
+            echo "No new data to commit"
+          else
+            git commit -m "data: ${{ inputs.command || 'extract daily' }} $(date -u +%F)"
+            git pull --rebase
+            git push
+          fi

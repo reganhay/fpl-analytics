@@ -1,0 +1,20 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Warehouse is rebuilt from raw data, never committed
+data/*.duckdb
+data/*.duckdb.wal
+
+# dbt build output
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+
+# Power BI autosave / editor noise
+*.pbix.bak
+.vscode/
