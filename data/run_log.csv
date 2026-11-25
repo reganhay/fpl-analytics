@@ -54,3 +54,5 @@ timestamp,stage,rows_written,status,detail
 2026-11-23T17:13:19+00:00,load,776,success,
 2026-11-24T16:54:11+00:00,extract_daily,7,success,
 2026-11-24T16:54:12+00:00,load,783,success,
+2026-11-25T16:42:11+00:00,extract_daily,3,success,
+2026-11-25T16:42:12+00:00,load,786,success,
